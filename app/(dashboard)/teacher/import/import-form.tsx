@@ -18,28 +18,38 @@ export function ImportForm({ lessons }: { lessons: LessonOption[] }) {
   return (
     <div className="space-y-5">
       <div className="rounded-xl border bg-card p-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h3 className="font-semibold">1. Tải file Excel mẫu</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Điền các cột Từ, Nghĩa và Ví dụ. Ví dụ là cột tùy chọn.
-            </p>
+        <div className="mb-4 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-lg bg-muted p-3 text-sm">
+            <div className="font-semibold">1. Tải bộ mẫu</div>
+            <div className="mt-1 text-muted-foreground">Tải file Excel mẫu từ hệ thống.</div>
           </div>
-          <a
-            href="/api/templates/vocabulary"
-            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium hover:bg-accent"
-          >
-            <Download className="h-4 w-4" />
-            Tải Excel mẫu
-          </a>
+          <div className="rounded-lg bg-muted p-3 text-sm">
+            <div className="font-semibold">2. Điền từ</div>
+            <div className="mt-1 text-muted-foreground">Điền Từ, Nghĩa và Ví dụ vào file.</div>
+          </div>
+          <div className="rounded-lg bg-muted p-3 text-sm">
+            <div className="font-semibold">3. Upload lại</div>
+            <div className="mt-1 text-muted-foreground">Chọn file đã điền để nhập vào bộ từ.</div>
+          </div>
         </div>
+
+        <a
+          href="/api/templates/vocabulary"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 font-semibold text-primary-foreground hover:opacity-90 sm:w-auto"
+        >
+          <Download className="h-4 w-4" />
+          Tải bộ mẫu Excel
+        </a>
+        <p className="mt-2 text-xs text-muted-foreground">
+          File mẫu có sẵn 3 cột: Từ, Nghĩa, Ví dụ. Cột Ví dụ có thể để trống.
+        </p>
       </div>
 
-      <form action={action} className="rounded-xl border bg-card p-5 space-y-5">
+      <form action={action} className="space-y-5 rounded-xl border bg-card p-5">
         <div>
-          <h3 className="font-semibold">2. Chọn bộ từ</h3>
+          <h3 className="font-semibold">Chọn nơi nhập từ</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Tạo một bộ mới hoặc thêm từ vào bộ hiện có, giống cách quản lý study set của Quizlet.
+            Có thể tạo bộ từ mới hoặc thêm vào bộ từ đã có.
           </p>
         </div>
 
@@ -67,15 +77,15 @@ export function ImportForm({ lessons }: { lessons: LessonOption[] }) {
             className="mt-1.5 w-full rounded-lg border bg-background px-3 py-2.5"
           />
           <span className="mt-1 block text-xs text-muted-foreground">
-            Chỉ dùng khi chọn “Tạo bộ từ mới”. Nếu để trống, hệ thống dùng tên file Excel.
+            Chỉ dùng khi tạo bộ từ mới. Nếu để trống, hệ thống dùng tên file Excel.
           </span>
         </label>
 
         <div>
-          <h3 className="font-semibold">3. Upload file đã điền</h3>
+          <h3 className="font-semibold">Upload file Excel đã điền</h3>
           <label className="mt-3 flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed p-7 text-center hover:bg-accent/40">
             <FileSpreadsheet className="h-8 w-8 text-muted-foreground" />
-            <span className="mt-2 text-sm font-medium">Chọn file .xlsx</span>
+            <span className="mt-2 text-sm font-medium">Chọn file .xlsx đã điền</span>
             <span className="mt-1 text-xs text-muted-foreground">Tối đa 5 MB</span>
             <input name="file" type="file" accept=".xlsx" required className="mt-3 text-sm" />
           </label>
@@ -88,12 +98,12 @@ export function ImportForm({ lessons }: { lessons: LessonOption[] }) {
           {pending ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              Đang thêm từ...
+              Đang nhập từ...
             </>
           ) : (
             <>
               <UploadCloud className="h-4 w-4" />
-              Thêm từ vào Draft
+              Upload và thêm từ
             </>
           )}
         </button>

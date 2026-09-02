@@ -7,21 +7,24 @@ function firstEnvEndingWith(suffix: string) {
   return entry?.[1];
 }
 
+// Prefer database variables created by the active Vercel/Supabase integration.
+// This prevents stale manually-created DATABASE_URL values from pointing Prisma
+// at a different project than Supabase Auth.
 const databaseUrl =
+  firstEnvEndingWith('_POSTGRES_PRISMA_URL') ??
+  firstEnvEndingWith('_POSTGRES_URL') ??
   process.env.DATABASE_URL ??
   process.env.POSTGRES_PRISMA_URL ??
-  process.env.POSTGRES_URL ??
-  firstEnvEndingWith('_POSTGRES_PRISMA_URL') ??
-  firstEnvEndingWith('_POSTGRES_URL');
+  process.env.POSTGRES_URL;
 
 const directUrl =
+  firstEnvEndingWith('_POSTGRES_URL_NON_POOLING') ??
   process.env.DIRECT_URL ??
   process.env.POSTGRES_URL_NON_POOLING ??
-  firstEnvEndingWith('_POSTGRES_URL_NON_POOLING') ??
   databaseUrl;
 
-if (databaseUrl && !process.env.DATABASE_URL) process.env.DATABASE_URL = databaseUrl;
-if (directUrl && !process.env.DIRECT_URL) process.env.DIRECT_URL = directUrl;
+if (databaseUrl) process.env.DATABASE_URL = databaseUrl;
+if (directUrl) process.env.DIRECT_URL = directUrl;
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 

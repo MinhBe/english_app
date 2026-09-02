@@ -1,15 +1,27 @@
 import { PrismaClient } from '@prisma/client';
 
+function firstEnvEndingWith(suffix: string) {
+  const entry = Object.entries(process.env).find(
+    ([key, value]) => key.endsWith(suffix) && Boolean(value),
+  );
+  return entry?.[1];
+}
+
 const databaseUrl =
   process.env.DATABASE_URL ??
   process.env.POSTGRES_PRISMA_URL ??
-  process.env.POSTGRES_URL;
+  process.env.POSTGRES_URL ??
+  firstEnvEndingWith('_POSTGRES_PRISMA_URL') ??
+  firstEnvEndingWith('_POSTGRES_URL');
 
-// Prisma generated client reads DATABASE_URL at runtime. Vercel's Supabase
-// integration uses POSTGRES_PRISMA_URL / POSTGRES_URL, so normalize them here.
-if (databaseUrl && !process.env.DATABASE_URL) {
-  process.env.DATABASE_URL = databaseUrl;
-}
+const directUrl =
+  process.env.DIRECT_URL ??
+  process.env.POSTGRES_URL_NON_POOLING ??
+  firstEnvEndingWith('_POSTGRES_URL_NON_POOLING') ??
+  databaseUrl;
+
+if (databaseUrl && !process.env.DATABASE_URL) process.env.DATABASE_URL = databaseUrl;
+if (directUrl && !process.env.DIRECT_URL) process.env.DIRECT_URL = directUrl;
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 

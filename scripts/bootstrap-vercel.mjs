@@ -42,4 +42,25 @@ execFileSync('npx', ['prisma', 'generate'], {
   env: childEnv,
 });
 
-console.log('Bootstrap DB complete.');
+process.env.DATABASE_URL = databaseUrl;
+process.env.DIRECT_URL = directUrl;
+const { PrismaClient } = await import('@prisma/client');
+const prisma = new PrismaClient();
+
+const tables = [
+  'profiles',
+  'lessons',
+  'lesson_versions',
+  'flashcards',
+  'flashcard_versions',
+  'import_batches',
+  'student_progress',
+  'review_logs',
+];
+
+for (const table of tables) {
+  await prisma.$executeRawUnsafe(`ALTER TABLE public.${table} ENABLE ROW LEVEL SECURITY`);
+}
+
+await prisma.$disconnect();
+console.log('Bootstrap DB + RLS complete.');

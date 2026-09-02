@@ -4,15 +4,6 @@ import { prisma } from '@/lib/db/prisma';
 import type { Profile, Role } from '@prisma/client';
 
 export async function getProfile(): Promise<Profile | null> {
-  if (
-    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    !process.env.DATABASE_URL
-  ) {
-    console.error('Missing required Supabase/Prisma environment variables.');
-    return null;
-  }
-
   try {
     const supabase = await createClient();
     const {
@@ -29,13 +20,13 @@ export async function getProfile(): Promise<Profile | null> {
 }
 
 export async function requireUser() {
-  const p = await getProfile();
-  if (!p) redirect('/sign-in');
-  return p;
+  const profile = await getProfile();
+  if (!profile) redirect('/sign-in');
+  return profile;
 }
 
 export async function requireRole(...roles: Role[]) {
-  const p = await requireUser();
-  if (!roles.includes(p.role)) redirect('/dashboard');
-  return p;
+  const profile = await requireUser();
+  if (!roles.includes(profile.role)) redirect('/dashboard');
+  return profile;
 }

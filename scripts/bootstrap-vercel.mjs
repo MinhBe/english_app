@@ -8,7 +8,29 @@ function firstEnvEndingWith(suffix) {
   return entry?.[1];
 }
 
+function findIntegrationPrefix() {
+  const serviceSuffix = '_SUPABASE_SERVICE_ROLE_KEY';
+  const secretSuffix = '_SUPABASE_SECRET_KEY';
+  const serviceEntry = Object.entries(process.env).find(
+    ([key, value]) =>
+      key !== 'SUPABASE_SERVICE_ROLE_KEY' &&
+      key.endsWith(serviceSuffix) &&
+      Boolean(value),
+  );
+  if (serviceEntry) return serviceEntry[0].slice(0, -serviceSuffix.length);
+
+  const secretEntry = Object.entries(process.env).find(
+    ([key, value]) =>
+      key !== 'SUPABASE_SECRET_KEY' && key.endsWith(secretSuffix) && Boolean(value),
+  );
+  if (secretEntry) return secretEntry[0].slice(0, -secretSuffix.length);
+  return null;
+}
+
+const integrationPrefix = findIntegrationPrefix();
+
 const databaseUrl =
+  (integrationPrefix && process.env[`${integrationPrefix}_POSTGRES_PRISMA_URL`]) ||
   process.env.DATABASE_URL ||
   process.env.POSTGRES_PRISMA_URL ||
   process.env.POSTGRES_URL ||
@@ -16,20 +38,22 @@ const databaseUrl =
   firstEnvEndingWith('_POSTGRES_URL');
 
 const directUrl =
+  (integrationPrefix && process.env[`${integrationPrefix}_POSTGRES_URL_NON_POOLING`]) ||
   process.env.DIRECT_URL ||
   process.env.POSTGRES_URL_NON_POOLING ||
   firstEnvEndingWith('_POSTGRES_URL_NON_POOLING') ||
   databaseUrl;
 
 const supabaseUrl =
+  (integrationPrefix && process.env[`${integrationPrefix}_SUPABASE_URL`]) ||
   process.env.SUPABASE_URL ||
-  process.env.NEXT_PUBLIC_SUPABASE_URL ||
-  firstEnvEndingWith('_SUPABASE_URL');
+  process.env.NEXT_PUBLIC_SUPABASE_URL;
 
 const adminKey =
-  process.env.SUPABASE_SERVICE_ROLE_KEY ||
-  firstEnvEndingWith('_SUPABASE_SERVICE_ROLE_KEY') ||
-  firstEnvEndingWith('_SUPABASE_SECRET_KEY');
+  (integrationPrefix &&
+    (process.env[`${integrationPrefix}_SUPABASE_SERVICE_ROLE_KEY`] ||
+      process.env[`${integrationPrefix}_SUPABASE_SECRET_KEY`])) ||
+  process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!databaseUrl || !directUrl) throw new Error('Postgres env missing.');
 if (!supabaseUrl || !adminKey) throw new Error('Supabase admin env missing.');

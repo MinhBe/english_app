@@ -6,9 +6,16 @@ export async function signIn(_: { error: string }, formData: FormData) {
   const email = String(formData.get('email') ?? '').trim();
   const password = String(formData.get('password') ?? '');
 
-  if (!process.env.DATABASE_URL) {
+  const hasDatabaseUrl = Boolean(
+    process.env.DATABASE_URL ||
+      process.env.POSTGRES_PRISMA_URL ||
+      process.env.POSTGRES_URL,
+  );
+
+  if (!hasDatabaseUrl) {
     return {
-      error: 'Máy chủ chưa được cấu hình kết nối cơ sở dữ liệu (DATABASE_URL).',
+      error:
+        'Máy chủ chưa có kết nối Postgres. Hãy kết nối Supabase với project Vercel hoặc cấu hình DATABASE_URL/POSTGRES_PRISMA_URL.',
     };
   }
 

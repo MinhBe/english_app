@@ -86,11 +86,61 @@ for (const table of [
 ]) {
   await prisma.$executeRawUnsafe(`ALTER TABLE public.${table} ENABLE ROW LEVEL SECURITY`);
 }
-await prisma.$disconnect();
 
 const authAdmin = createClient(supabaseUrl, adminKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
-const { data, error } = await authAdmin.auth.admin.listUsers({ page: 1, perPage: 10 });
-if (error) throw error;
-console.log(`Supabase Admin API reachable; ${data.users.length} user(s) sampled.`);
+const { data: listed, error: listError } = await authAdmin.auth.admin.listUsers({
+  page: 1,
+  perPage: 1000,
+});
+if (listError) throw listError;
+
+const testUsers = [
+  { email: 'admin@test.local', password: 'admin1', role: 'ADMIN', fullName: 'Test Admin' },
+  { email: 'sv@test.local', password: 'sv1234', role: 'STUDENT', fullName: 'Test Student' },
+];
+
+for (const spec of testUsers) {
+  let user = listed.users.find(
+    (candidate) => candidate.email?.toLowerCase() === spec.email,
+  );
+
+  if (!user) {
+    const { data, error } = await authAdmin.auth.admin.createUser({
+      email: spec.email,
+      password: spec.password,
+      email_confirm: true,
+      user_metadata: { full_name: spec.fullName },
+    });
+    if (error || !data.user) throw error || new Error(`Could not create ${spec.email}`);
+    user = data.user;
+  } else {
+    const { data, error } = await authAdmin.auth.admin.updateUserById(user.id, {
+      password: spec.password,
+      email_confirm: true,
+      user_metadata: { full_name: spec.fullName },
+    });
+    if (error || !data.user) throw error || new Error(`Could not update ${spec.email}`);
+    user = data.user;
+  }
+
+  await prisma.profile.upsert({
+    where: { id: user.id },
+    create: {
+      id: user.id,
+      email: spec.email,
+      fullName: spec.fullName,
+      role: spec.role,
+    },
+    update: {
+      email: spec.email,
+      fullName: spec.fullName,
+      role: spec.role,
+    },
+  });
+}
+
+const profileCount = await prisma.profile.count();
+await prisma.$disconnect();
+console.log(`Supabase test users provisioned; ${profileCount} profile(s) present.`);

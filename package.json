@@ -1,0 +1,67 @@
+{
+  "name": "flashcard-learning-platform",
+  "version": "2.0.0",
+  "description": "Multi-role English flashcard learning platform with content versioning, Excel import and FSRS.",
+  "author": "Maciej Kick",
+  "license": "MIT",
+  "keywords": [
+    "flashcards",
+    "fsrs",
+    "nextjs",
+    "supabase",
+    "prisma",
+    "spaced-repetition"
+  ],
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "setup": "bash scripts/setup.sh",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:studio": "prisma studio",
+    "db:seed": "npx tsx scripts/seed.ts"
+  },
+  "dependencies": {
+    "@tailwindcss/postcss": "4.1.7",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "dotenv": "^16.5.0",
+    "lucide-react": "^0.511.0",
+    "next": "16.1.6",
+    "postcss": "^8.5.3",
+    "radix-ui": "^1.4.2",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "server-only": "^0.0.1",
+    "sonner": "^2.0.7",
+    "swr": "^2.3.3",
+    "tailwind-merge": "^3.3.0",
+    "tailwindcss": "4.1.7",
+    "tw-animate-css": "^1.3.0",
+    "typescript": "^5.8.3",
+    "zod": "^3.24.4",
+    "@prisma/client": "^6.19.3",
+    "@supabase/supabase-js": "^2.57.0",
+    "@supabase/ssr": "^0.12.5",
+    "ts-fsrs": "^5.4.2",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.18",
+    "@types/react": "^19.1.4",
+    "@types/react-dom": "^19.1.5",
+    "vitest": "^3.2.1",
+    "prisma": "^6.19.3"
+  },
+  "pnpm": {
+    "ignoredBuiltDependencies": [
+      "@tailwindcss/oxide",
+      "esbuild",
+      "sharp"
+    ]
+  }
+}

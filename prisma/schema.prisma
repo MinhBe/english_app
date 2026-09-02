@@ -1,0 +1,138 @@
+generator client { provider = "prisma-client-js" }
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role { ADMIN TEACHER STUDENT }
+enum VersionStatus { DRAFT PUBLISHED ARCHIVED }
+enum ContentSource { MANUAL IMPORT }
+enum CardState { NEW LEARNING REVIEW RELEARNING }
+
+model Profile {
+  id        String   @id @db.Uuid
+  email     String   @unique
+  fullName  String?  @map("full_name")
+  role      Role     @default(STUDENT)
+  createdAt DateTime @default(now()) @map("created_at")
+  lessonsCreated  Lesson[]        @relation("LessonTeacher")
+  versionsCreated LessonVersion[] @relation("VersionAuthor")
+  importBatches   ImportBatch[]
+  studentProgress StudentProgress[]
+  @@map("profiles")
+}
+
+model Lesson {
+  id String @id @default(uuid()) @db.Uuid
+  title String
+  description String?
+  teacherId String @map("teacher_id") @db.Uuid
+  teacher Profile @relation("LessonTeacher", fields:[teacherId], references:[id])
+  currentPublishedVersionId String? @unique @map("current_published_version_id") @db.Uuid
+  currentPublishedVersion LessonVersion? @relation("CurrentPublishedVersion", fields:[currentPublishedVersionId], references:[id], onDelete:SetNull)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  versions LessonVersion[] @relation("LessonVersions")
+  flashcards Flashcard[]
+  @@map("lessons")
+}
+
+model LessonVersion {
+  id String @id @default(uuid()) @db.Uuid
+  lessonId String @map("lesson_id") @db.Uuid
+  lesson Lesson @relation("LessonVersions", fields:[lessonId], references:[id], onDelete:Cascade)
+  currentForLesson Lesson? @relation("CurrentPublishedVersion")
+  versionNumber Int @map("version_number")
+  status VersionStatus @default(DRAFT)
+  source ContentSource @default(MANUAL)
+  note String?
+  createdById String @map("created_by_id") @db.Uuid
+  createdBy Profile @relation("VersionAuthor", fields:[createdById], references:[id])
+  createdAt DateTime @default(now()) @map("created_at")
+  publishedAt DateTime? @map("published_at")
+  cardVersions FlashcardVersion[]
+  importBatch ImportBatch?
+  @@unique([lessonId, versionNumber])
+  @@map("lesson_versions")
+}
+
+model Flashcard {
+  id String @id @default(uuid()) @db.Uuid
+  lessonId String @map("lesson_id") @db.Uuid
+  lesson Lesson @relation(fields:[lessonId], references:[id], onDelete:Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  versions FlashcardVersion[]
+  studentProgress StudentProgress[]
+  @@map("flashcards")
+}
+
+model FlashcardVersion {
+  id String @id @default(uuid()) @db.Uuid
+  flashcardId String @map("flashcard_id") @db.Uuid
+  flashcard Flashcard @relation(fields:[flashcardId], references:[id], onDelete:Cascade)
+  lessonVersionId String @map("lesson_version_id") @db.Uuid
+  lessonVersion LessonVersion @relation(fields:[lessonVersionId], references:[id], onDelete:Cascade)
+  frontText String @map("front_text")
+  backText String @map("back_text")
+  exampleSentence String? @map("example_sentence")
+  source ContentSource @default(MANUAL)
+  createdAt DateTime @default(now()) @map("created_at")
+  @@unique([flashcardId, lessonVersionId])
+  @@map("flashcard_versions")
+}
+
+model ImportBatch {
+  id String @id @default(uuid()) @db.Uuid
+  lessonVersionId String @unique @map("lesson_version_id") @db.Uuid
+  lessonVersion LessonVersion @relation(fields:[lessonVersionId], references:[id], onDelete:Cascade)
+  fileName String @map("file_name")
+  totalRows Int @map("total_rows")
+  successRows Int @map("success_rows")
+  errorRows Int @map("error_rows")
+  errorsJson Json? @map("errors_json")
+  createdById String @map("created_by_id") @db.Uuid
+  createdBy Profile @relation(fields:[createdById], references:[id])
+  createdAt DateTime @default(now()) @map("created_at")
+  @@map("import_batches")
+}
+
+model StudentProgress {
+  id String @id @default(uuid()) @db.Uuid
+  studentId String @map("student_id") @db.Uuid
+  student Profile @relation(fields:[studentId], references:[id])
+  flashcardId String @map("flashcard_id") @db.Uuid
+  flashcard Flashcard @relation(fields:[flashcardId], references:[id], onDelete:Cascade)
+  due DateTime @default(now())
+  stability Float @default(0)
+  difficulty Float @default(0)
+  elapsedDays Int @default(0) @map("elapsed_days")
+  scheduledDays Int @default(0) @map("scheduled_days")
+  reps Int @default(0)
+  lapses Int @default(0)
+  learningSteps Int @default(0) @map("learning_steps")
+  state CardState @default(NEW)
+  lastReview DateTime? @map("last_review")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  reviewLogs ReviewLog[]
+  @@unique([studentId, flashcardId])
+  @@map("student_progress")
+}
+
+model ReviewLog {
+  id String @id @default(uuid()) @db.Uuid
+  studentProgressId String @map("student_progress_id") @db.Uuid
+  studentProgress StudentProgress @relation(fields:[studentProgressId], references:[id], onDelete:Cascade)
+  rating Int
+  stateBefore CardState @map("state_before")
+  due DateTime
+  stability Float
+  difficulty Float
+  elapsedDays Int @map("elapsed_days")
+  scheduledDays Int @map("scheduled_days")
+  learningSteps Int @default(0) @map("learning_steps")
+  reviewedAt DateTime @default(now()) @map("reviewed_at")
+  @@map("review_logs")
+}

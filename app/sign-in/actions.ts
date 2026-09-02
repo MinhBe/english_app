@@ -6,12 +6,6 @@ export async function signIn(_: { error: string }, formData: FormData) {
   const email = String(formData.get('email') ?? '').trim();
   const password = String(formData.get('password') ?? '');
 
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    return {
-      error: 'Máy chủ chưa được cấu hình Supabase trên Vercel.',
-    };
-  }
-
   if (!process.env.DATABASE_URL) {
     return {
       error: 'Máy chủ chưa được cấu hình kết nối cơ sở dữ liệu (DATABASE_URL).',

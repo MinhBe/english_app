@@ -55,8 +55,15 @@ const adminKey =
       process.env[`${integrationPrefix}_SUPABASE_SECRET_KEY`])) ||
   process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+const publicKey =
+  (integrationPrefix &&
+    (process.env[`NEXT_PUBLIC_${integrationPrefix}_SUPABASE_ANON_KEY`] ||
+      process.env[`${integrationPrefix}_SUPABASE_PUBLISHABLE_KEY`])) ||
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
 if (!databaseUrl || !directUrl) throw new Error('Postgres env missing.');
-if (!supabaseUrl || !adminKey) throw new Error('Supabase admin env missing.');
+if (!supabaseUrl || !adminKey || !publicKey) throw new Error('Supabase auth env missing.');
 
 const childEnv = { ...process.env, DATABASE_URL: databaseUrl, DIRECT_URL: directUrl };
 
@@ -139,8 +146,26 @@ for (const spec of testUsers) {
       role: spec.role,
     },
   });
+
+  const probe = createClient(supabaseUrl, publicKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+  const { data: loginData, error: loginError } = await probe.auth.signInWithPassword({
+    email: spec.email,
+    password: spec.password,
+  });
+  if (loginError || !loginData.user) {
+    throw loginError || new Error(`Login verification failed for ${spec.email}`);
+  }
+  await probe.auth.signOut();
 }
 
-const profileCount = await prisma.profile.count();
+const profiles = await prisma.profile.findMany({
+  where: { email: { in: testUsers.map((user) => user.email) } },
+  select: { email: true, role: true },
+  orderBy: { email: 'asc' },
+});
 await prisma.$disconnect();
-console.log(`Supabase test users provisioned; ${profileCount} profile(s) present.`);
+
+if (profiles.length !== 2) throw new Error('Expected two test profiles.');
+console.log('Bootstrap verified: both test logins work and roles are present.');

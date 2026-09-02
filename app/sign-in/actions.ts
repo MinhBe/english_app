@@ -2,20 +2,25 @@
 
 import { createClient } from '@/lib/supabase/server';
 
+function hasPostgresConnection() {
+  return Object.entries(process.env).some(
+    ([key, value]) =>
+      Boolean(value) &&
+      (key === 'DATABASE_URL' ||
+        key === 'POSTGRES_PRISMA_URL' ||
+        key === 'POSTGRES_URL' ||
+        key.endsWith('_POSTGRES_PRISMA_URL') ||
+        key.endsWith('_POSTGRES_URL')),
+  );
+}
+
 export async function signIn(_: { error: string }, formData: FormData) {
   const email = String(formData.get('email') ?? '').trim();
   const password = String(formData.get('password') ?? '');
 
-  const hasDatabaseUrl = Boolean(
-    process.env.DATABASE_URL ||
-      process.env.POSTGRES_PRISMA_URL ||
-      process.env.POSTGRES_URL,
-  );
-
-  if (!hasDatabaseUrl) {
+  if (!hasPostgresConnection()) {
     return {
-      error:
-        'Máy chủ chưa có kết nối Postgres. Hãy kết nối Supabase với project Vercel hoặc cấu hình DATABASE_URL/POSTGRES_PRISMA_URL.',
+      error: 'Máy chủ chưa có kết nối Postgres từ Vercel/Supabase integration.',
     };
   }
 

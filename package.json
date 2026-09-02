@@ -14,7 +14,7 @@
   ],
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "node scripts/prepare-prisma.mjs && next build",
+    "build": "node scripts/prepare-prisma.mjs && node scripts/remove-legacy-sv.mjs && next build",
     "start": "next start",
     "test": "vitest run",
     "test:watch": "vitest",

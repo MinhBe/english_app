@@ -1,20 +1,15 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from '@/lib/supabase/config';
 
 export async function proxy(request: NextRequest) {
   const signInUrl = new URL('/sign-in', request.url);
-
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    console.error('Missing Supabase public environment variables in proxy.');
-    return NextResponse.redirect(signInUrl);
-  }
-
   let response = NextResponse.next({ request });
 
   try {
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      SUPABASE_URL,
+      SUPABASE_PUBLISHABLE_KEY,
       {
         cookies: {
           getAll: () => request.cookies.getAll(),
